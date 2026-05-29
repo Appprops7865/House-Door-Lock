@@ -1,0 +1,43 @@
+name: Android CI (Automated APK Builder)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant Execute Permissions
+      run: |
+        chmod +x code/android-build/build-apk.sh || true
+        chmod +x android-build/build-apk.sh || true
+        chmod +x android/gradlew || true
+
+    - name: Run Figma App Build Script
+      run: |
+        if [ -f "code/android-build/build-apk.sh" ]; then
+          cd code/android-build && ./build-apk.sh
+        elif [ -f "android-build/build-apk.sh" ]; then
+          cd android-build && ./build-apk.sh
+        else
+          cd android && ./gradlew assembleDebug
+        fi
+
+    - name: Upload Finished APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Smart-Lock-App
+        path: '**/outputs/apk/debug/app-debug.apk'
